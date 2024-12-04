@@ -13,29 +13,29 @@ This project aims to fine-tune a Large Language Model (LLM), such as Llama-2, sp
 1. EHR-DS-QA
    - A synthetic question-and-answer dataset derived from medical discharge summaries.
    - Contains: 21,466 medical discharge summaries and 156,599 synthetically generated Q&A pairs.
-   - Link to EHR-DS-QA Dataset
+   - [Link to EHR-DS-QA Dataset](https://physionet.org/content/ehr-ds-qa/1.0.0/)
 
 2. PMC-Patients
    - A large-scale dataset consisting of 167,000 patient summaries.
    - Includes: 3.1 million patient-article relevance annotations and 293,000 patient-patient similarity annotations.
-   - Link to PMC-Patients Dataset
+   - [Link to PMC-Patients Dataset](https://www.nature.com/articles/s41597-023-02814-8)
 
 3. BioRead
    - A biomedical machine reading comprehension dataset with approximately 16.4 million passage-question instances.
    - Includes a smaller subset, BioReadLite, for those with limited computational resources.
-   - Link to BioRead Dataset
+   - [Link to BioRead Dataset](https://github.com/Andy-jqa/biomedical-qa-datasets)
 
 4. CliCR
    - A dataset specifically designed for machine comprehension in the medical domain, containing about 100,000 queries based on BMJ Case Reports.
-   - Link to CliCR Dataset
+   - [Link to CliCR Dataset](https://github.com/Andy-jqa/biomedical-qa-datasets)
 
 5. HealthQA
    - A consumer health question answering dataset that includes various health-related questions and answers.
-   - Link to HealthQA Dataset
+   - [Link to HealthQA Dataset](https://github.com/Andy-jqa/biomedical-qa-datasets)
 
 6. CheXpert
    - A large dataset of chest radiographs with labels for various conditions, useful for integrating visual data into patient query systems.
-   - Link to CheXpert Dataset
+   - [Link to CheXpert Dataset](https://stanfordmlgroup.github.io/competitions/chexpert/)
 
 ## Model Setup
 - Use Hugging Face's Transformers library to load the pre-trained Llama-2 model.
