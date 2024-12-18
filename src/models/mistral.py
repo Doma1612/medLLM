@@ -1,11 +1,10 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 def load_model():
-    # TODO: get correct model name
-    model_name = "huggingface/llama-gpt2"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(model_name)
-    return model, tokenizer
+   model_name = "mistralai/Mistral-7B-Instruct-v0.1"
+   tokenizer = AutoTokenizer.from_pretrained(model_name)
+   model = AutoModelForCausalLM.from_pretrained(model_name)
+   return model, tokenizer
 
 def generate_response(model, tokenizer, prompt):
     input = tokenizer.encode(prompt, return_tensors="pt")
