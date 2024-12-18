@@ -1,5 +1,6 @@
 import streamlit as st
 import time
+from ..models import llama
 
 st.write("""
 # Hello World
@@ -14,9 +15,11 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+tokenizer, model = llama.load_model()
+
 # currently mirrors promt
 def response_gen():
-    response = f"Echo: {prompt}"
+    response = llama.generate_response(model, tokenizer, prompt)
 
     # type out response word by word
     for word in response.split():
