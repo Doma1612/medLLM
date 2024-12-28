@@ -1,10 +1,9 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import LlamaForCausalLm, LlamaTokenizer
 
 def load_model():
-    # TODO: get correct model name
-    model_name = "huggingface/llama-gpt2"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(model_name)
+    model_name = "meta-llama/Llama-2-7b-chat-hf"
+    tokenizer = LlamaTokenizer.from_pretrained(model_name, local_files_only=True)
+    model = LlamaForCausalLm.from_pretrained(model_name, local_files_only=True)
     return model, tokenizer
 
 def generate_response(model, tokenizer, prompt):
