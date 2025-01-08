@@ -1,1 +1,5 @@
 src/config/secrets.py
+
+// ignore python cache files and folders
+*.pyc
+__pycache__/
