@@ -1,10 +1,14 @@
 import streamlit as st
 import time
-from src.models import mistral
+from src.model import generate_response
 
-st.write("""
-# Hello World
-""")
+def response_gen(_prompt):
+    _response = generate_response(_prompt)
+
+    # type out response word by word
+    for word in _response.split():
+        yield word + " "
+        time.sleep(0.05)
 
 # Initialize chat history
 if "messages" not in st.session_state:
@@ -15,16 +19,6 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-tokenizer, model = mistral.load_model()
-
-# currently mirrors promt
-def response_gen():
-    response = mistral.generate_response(model, tokenizer, prompt)
-
-    # type out response word by word
-    for word in response.split():
-        yield word + " "
-        time.sleep(0.05)
 
 # React to user input
 if prompt := st.chat_input("insert patient data"):
@@ -35,6 +29,6 @@ if prompt := st.chat_input("insert patient data"):
 
     # Display assistant response in chat message container
     with st.chat_message("assistant"):
-        response = st.write_stream(response_gen())
+        response = st.write_stream(response_gen(prompt))
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": response})
