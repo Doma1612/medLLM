@@ -3,7 +3,10 @@ import numpy as np
 import requests
 import io
 import fitz  # PyMuPDF
+import os
 from tqdm import tqdm
+
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 class DataTransformer:
     """Base class for data transformation tasks."""
@@ -54,8 +57,8 @@ class PDFExtractor(DataTransformer):
 
 
 def main():
-    article_data_file_path = "data/pmc_patients/processed/article_data_final_state.csv"
-    full_text_output_path = "data/pmc_patients/processed/full_texts_subset_{}.csv"
+    article_data_file_path = ROOT_DIR + "/data/pmc_patients/processed/article_data_final_state.csv"
+    full_text_output_path = ROOT_DIR + "/data/pmc_patients/processed/full_texts_subset_{}.csv"
     
     df = pd.read_csv(article_data_file_path)
     
@@ -63,7 +66,7 @@ def main():
     df = df.dropna(subset=['full_text_url'])
     df = df.sort_values(by="PMID")
     # for testing
-    # df = df.head(100)
+    df = df.head(100)
     # Split the DataFrame into 5 approximately equal parts
     df_splits = np.array_split(df, 5)
     
