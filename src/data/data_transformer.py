@@ -54,8 +54,8 @@ class PDFExtractor(DataTransformer):
 
 
 def main():
-    article_data_file_path = "/home/dominik/Documents/Informatik/1_Semester/medLLM/data/pmc_patients/processed/article_data_final_state.csv"
-    full_text_output_path = "/home/dominik/Documents/Informatik/1_Semester/medLLM/data/pmc_patients/processed/examples/full_texts_subset_{}.csv"
+    article_data_file_path = "data/pmc_patients/processed/article_data_final_state.csv"
+    full_text_output_path = "data/pmc_patients/processed/full_texts_subset_{}.csv"
     
     df = pd.read_csv(article_data_file_path)
     
