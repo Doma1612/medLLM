@@ -1,8 +1,33 @@
 import streamlit as st
+import torch
 import time
+
+from src.model.roberta import CustomRobertaForSequenceClassification
+from src.data.DataPreprocessor import DataPreprocessor
 from src.model import generate_response
 
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+model = CustomRobertaForSequenceClassification(num_labels=20000).to(device)
+model.load_model()
+
 def response_gen(_prompt):
+    # Trim input text and tokenize
+    _input = DataPreprocessor(_prompt)
+    _input.trim_patient_description()
+    tokenized_input = _input.tokenize_data()
+    tokenized_input = {k: v.to(device) for k, v in tokenized_input.items()}
+
+    # get model
+    predictions = model.predict(tokenized_input)
+
+    # TODO: get papers according to predictions
+    for papers in predictions:
+        pass
+    papers = ""
+
+    # summarize papers
+    _prompt = DataPreprocessor().summarize_text_with_format(papers)
     _response = generate_response(_prompt)
 
     # type out response word by word

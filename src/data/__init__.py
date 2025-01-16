@@ -1,2 +1,2 @@
-from .dummy_data import DummyData
-from .data_preparation import prepare_data
+from .DataPreprocessor import DataPreprocessor
+from .data_preparation import prepare_training_data

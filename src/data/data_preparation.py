@@ -1,11 +1,11 @@
 import torch
 from torch.utils.data import DataLoader, RandomSampler, TensorDataset
+from src.data.DataPreprocessor import DataPreprocessor
 from transformers import AutoTokenizer
-from src.data.dummy_data import DummyData
 
-def prepare_data(device, batch_size=128):
+def prepare_training_data(device, batch_size=128):
     tokenizer = AutoTokenizer.from_pretrained("FacebookAI/roberta-base")
-    dummy_data = DummyData().get_dummy_data()
+    dummy_data = DataPreprocessor().get_dummy_data()
     inputs, labels = zip(*dummy_data)
 
     tokenized_inputs = tokenizer(list(inputs), padding='max_length', max_length=50, return_tensors='pt')
