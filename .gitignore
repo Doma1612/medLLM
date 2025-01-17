@@ -10,3 +10,5 @@ __pycache__/
 
 # ignore pth files
 *.pth
+
+full_texts_combined.csv
