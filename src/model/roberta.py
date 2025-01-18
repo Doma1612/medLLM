@@ -5,58 +5,64 @@ from torch import nn, optim
 from transformers import RobertaForSequenceClassification, AutoTokenizer
 import time
 
+batch_size = 16
+num_labels=128836
+
+savedataset = False # True if you want to save it. Disclaimer they are each 5GB large
 
 tokenizer = AutoTokenizer.from_pretrained("FacebookAI/roberta-base")
 
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu')
 
-homedir = "C:/Users/Neil/Documents/Uni/Master/BKIM"
+homedir = ''#Define your Home Directory
 
 print("Start Data transformation")
 
-dummydata = [
-    ["Cold, Sneeze, Cough", [1, 2, 3]],
-    ["Stomach Hurt, Headache", [4, 5, 6]],
-    ["Low blood pressure, high heartbeatrate", [2, 5, 8]],
-    ["Fainting, low oxygen", [1, 8, 9]],
-    ["Hurting leg, fainting, high thirst", [4, 7, 8]],
-    ["Nausea, Vomiting", [0, 6, 9]],
-    ["High fever, muscle pain", [2, 4, 9]],
-    ["Chest pain, shortness of breath", [1, 5, 7]],
-    ["Dizziness, lightheadedness", [3, 6, 8]],
-    ["Joint pain, fatigue", [5, 6, 7]],
-    ["Rash, itching", [4, 8, 9]],
-    ["Earache, fever", [1, 2, 5]],
-    ["Back pain, discomfort", [3, 4, 6]],
-    ["Dry throat, difficulty swallowing", [2, 5, 9]],
-    ["Weight loss, increased thirst", [1, 7, 8]],
-    ["Mood swings, insomnia", [3, 5, 9]],
-    ["Sore throat, fatigue", [2, 6, 9]],
-    ["Swelling, bruising", [1, 3, 8]],
-    ["Blurred vision, headache", [4, 5, 9]],
-    ["Cold extremities, shivering", [2, 6, 8]]
-]
-dummydata = dummydata *50
-print(len(dummydata))
+dataset = torch.load(homedir+'/reduceddata.pt')
+print(len(dataset))
 
-dummyset=[]
-for data in dummydata:
-    inp = tokenizer(data[0],padding='max_length', max_length=50)
-    outp = data[1]
-    a = [*[torch.tensor(v).to(device) for k,v in inp.items()], torch.tensor(outp).to(device)]
-    dummyset.append(a)
+def createset():
+    tokenized_dataset=[]
+    for data in dataset:
+        inp = tokenizer(data[0],padding='max_length', max_length=512,truncation=True)#=3589)
+        outp = data[1]
+        try: 
+            a = [*[torch.tensor(v).to(device) for k,v in inp.items()], torch.tensor(outp).to(device)]
+        except:
+            continue
+        else:
+            outlogits = torch.zeros(num_labels, dtype=torch.float32).to(device)
+            outlogits[outp] = 1.0
+            a = [*[torch.tensor(v).to(device) for k,v in inp.items()], outlogits]
+        tokenized_dataset.append(a)
 
-trainsize = int(len(dummyset)*0.8)
-testsize = len(dummyset) - trainsize
-traindata, evaldata = torch.utils.data.random_split(dummyset,[trainsize,testsize])
-print(len(traindata))
+    if savedataset:
+        torch.save(tokenized_dataset, "tokenizeddata.pt")
+    return tokenized_dataset
 
-batch_size = 128
+tokenized_dataset = createset()
+#dummyset = torch.load(homedir+"/tokenizeddata.pt")
 
-train_sampler = RandomSampler(traindata)
-train_dataloader = DataLoader(traindata, sampler=train_sampler, batch_size=batch_size)
-eval_sampler = RandomSampler(evaldata)
-eval_dataloader = DataLoader(evaldata, sampler=eval_sampler, batch_size=batch_size)
+trainsize = int(len(tokenized_dataset)*0.8)
+testsize = len(tokenized_dataset) - trainsize
+traindata, evaldata = torch.utils.data.random_split(tokenized_dataset,[trainsize,testsize])
+
+def createdataloader(traindata,evaldata):
+    train_sampler = RandomSampler(traindata)
+    train_dataloader = DataLoader(traindata, sampler=train_sampler, batch_size=batch_size)
+    eval_sampler = RandomSampler(evaldata)
+    eval_dataloader = DataLoader(evaldata, sampler=eval_sampler, batch_size=batch_size)
+    
+    if savedataset:
+        torch.save(train_dataloader, "train_dataloader.pt")
+        torch.save(eval_dataloader, "eval_dataloader.pt")
+    return train_dataloader,eval_dataloader
+
+train_dataloader,eval_dataloader = createdataloader(traindata,evaldata)
+# train_dataloader = torch.load(homedir+"/train_dataloader.pt")
+# eval_dataloader = torch.load(homedir+"/eval_dataloader.pt")
+
+
 
 
 class CustomRobertaForSequenceClassification(nn.Module):
@@ -82,26 +88,29 @@ def timeSince(since, percent):
     rs = es - s
     return '%s (- %s)' % (asMinutes(s), asMinutes(rs))
     
-model = CustomRobertaForSequenceClassification(num_labels=20000).to(device)
+model = CustomRobertaForSequenceClassification(num_labels=128836).to(device)
 
 def train_epoch(dataloader, encoder, optimizer, criterion):
+    i=0
+
     total_loss = 0
     
     for data in dataloader:
         inp, att, out = data
+    
 
         optimizer.zero_grad()
 
         logits = encoder(inp, attention_mask = att)
-
-        targets = torch.zeros(logits.size(), dtype=torch.float32).to(device)
-        targets[0, out] = 1.0
-        loss = criterion(logits, targets)
+        loss = criterion(logits, out)
         loss.backward()
 
         optimizer.step()
 
         total_loss += loss.item()
+        i += 1
+        if i % 10 == 0:
+            print(i*batch_size, "von", len(traindata))
 
         
     return total_loss / len(dataloader)
@@ -114,9 +123,7 @@ def test_epoch(dataloader, encoder,  criterion):
 
         logits = encoder(inp, attention_mask = att)
 
-        targets = torch.zeros(logits.size(), dtype=torch.float32).to(device)
-        targets[0, out] = 1.0
-        loss = criterion(logits, targets)
+        loss = criterion(logits, out)
 
         total_loss += loss.item()
         
@@ -129,8 +136,9 @@ def train(train_dataloader, eval_dataloader, encoder, epochs, lr = 0.0001, print
     
     encoder_optimizer = optim.Adam(encoder.parameters(), lr=lr)
 
-    _ ,_, fb = next(iter(train_dataloader))
-    pos_weight = torch.tensor([(encoder.num_labels - len(fb[0])) / len(fb[0])]).to(device)
+    #_ ,_, fb = next(iter(train_dataloader))
+    #pos_weight = torch.tensor([(encoder.num_labels - len(fb[0])) / len(fb[0])]).to(device)
+    pos_weight = torch.tensor([(encoder.num_labels - 18) / 18]).to(device)
     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
     encoder.train()
 
@@ -163,6 +171,8 @@ def train(train_dataloader, eval_dataloader, encoder, epochs, lr = 0.0001, print
 print("Start Training")
 train(train_dataloader,eval_dataloader,model,10, lr = 0.001)
 
+model.load_state_dict(torch.load(homedir+"/llmrobertalaststate.pth"))
+
 
 
 def eval(input):
@@ -176,11 +186,11 @@ def eval(input):
     out = model(inp, attention_mask = att)
 
     out = torch.sigmoid(out)
-    #print('Probs: ', out)
     out = out > 0.8
     out = torch.nonzero(out, as_tuple=True)
 
     papers = out[1].tolist()
-    print(papers)
+    papers = torch.topk(torch.tensor(papers),3)
+    print(papers[0])
 
 eval("Cold, Sneeze, Cough")
