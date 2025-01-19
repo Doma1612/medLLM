@@ -1,16 +1,17 @@
-import torch
-from transformers import pipeline
+import torch.cuda
+from torch.cuda.amp import autocast
 
-def generate_response(_prompt):
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    model_name = "meta-llama/Llama-3.2-1B-Instruct"
-    generator = pipeline(model=model_name, device=device, torch_dtype=torch.bfloat16)
+def generate_response(_prompt, _generator):
 
-    response = generator(
-        _prompt,
-        do_sample = False,
-        temperature = 1.0,
-        top_p = 1,
-        max_new_tokens = 50,
-    )
-    return response[0]['generated_text']
+    with autocast():
+        response = _generator(
+            _prompt,
+            do_sample = False,
+            temperature = 1.0,
+            top_p = 1,
+            max_new_tokens = 20,
+        )
+
+    torch.cuda.empty_cache()
+    torch.cuda.ipc_collect()
+    return response[0]['summary_text']

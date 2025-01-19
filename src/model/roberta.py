@@ -1,3 +1,5 @@
+import os.path
+
 from torch import nn
 import torch
 from transformers import RobertaForSequenceClassification
@@ -13,10 +15,11 @@ class CustomRobertaForSequenceClassification(nn.Module):
         outputs = self.roberta(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
         return outputs.logits
 
-    def load_model(self):
-        path = '../../models/llm_roberta_last_state.pth'
-        self.load_state_dict(torch.load(path, map_location=torch.device(self.device)))
-        self.eval()
+    def load_model(self, root_dir):
+        path = root_dir + "/models/llm_roberta_last_state.pth"
+        if os.path.exists(path):
+            self.load_state_dict(torch.load(path, map_location=torch.device(self.device)))
+            self.eval()
 
     def predict(self, tokenized_text):
         self.load_model()

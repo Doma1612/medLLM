@@ -1,17 +1,42 @@
 import streamlit as st
+from transformers import pipeline
+import pandas as pd
 import torch
 import time
+import os
 
 from src.model.roberta import CustomRobertaForSequenceClassification
 from src.data.DataPreprocessor import DataPreprocessor
 from src.model import generate_response
 
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
+# set environment variable for cuda
+if torch.cuda.is_available():
+    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+
+# initialize roberta model
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = CustomRobertaForSequenceClassification(num_labels=20000).to(device)
-model.load_model()
+model.load_model(ROOT_DIR)
+
+# initialize generator
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+model_name = "meta-llama/Llama-3.2-1B-Instruct"
+generator = pipeline(model=model_name, device=device, torch_dtype=torch.float16, task="summarization")
+
+# get paper data
+full_text_papers = pd.read_csv(f"{ROOT_DIR}/data/pmc_patients/processed/full_texts_combined.csv")
+full_text_papers_ids = pd.read_csv(f"{ROOT_DIR}/data/pmc_patients/Summary_data/list_of_articles_with_full_text.csv")
+
+def get_list_of_articles(_predictions):
+    paper_ids = full_text_papers_ids[full_text_papers_ids["index"].isin(_predictions)]
+
+    _predictions_df = full_text_papers[full_text_papers["PMID"].isin(paper_ids["article"])]
+    return _predictions_df["full_text"].tolist()
 
 def response_gen(_prompt):
+    st.spinner("Loading...")
     # Trim input text and tokenize
     _input = DataPreprocessor(_prompt)
     _input.trim_patient_description()
@@ -19,21 +44,26 @@ def response_gen(_prompt):
     tokenized_input = {k: v.to(device) for k, v in tokenized_input.items()}
 
     # get model
-    predictions = model.predict(tokenized_input)
+    # TODO: uncomment next line
+    # predictions = model.predict(tokenized_input)
+    # TODO: remove test predictions
+    predictions = [89]
 
-    # TODO: get papers according to predictions
-    for papers in predictions:
-        pass
-    papers = ""
+    # map to paper ids
+    list_of_articles = get_list_of_articles(predictions)
 
     # summarize papers
-    _prompt = DataPreprocessor().summarize_text_with_format(papers)
-    _response = generate_response(_prompt)
+    _prompt = DataPreprocessor().summarize_text_with_format(list_of_articles)
+    _response = generate_response(_prompt, generator)
+
+    st.success()
 
     # type out response word by word
     for word in _response.split():
         yield word + " "
         time.sleep(0.05)
+
+    torch.cuda.empty_cache()
 
 # Initialize chat history
 if "messages" not in st.session_state:

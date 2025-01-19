@@ -68,14 +68,20 @@ class DataPreprocessor():
         return tokenized_inputs
 
     def summarize_text_with_format(self, list_of_papers):
-        _prompt = f"""Summarize in the following format: """
-        for paper, link in list_of_papers:
-            _prompt += f"""{paper} ({link})"""
+        _prompt = f"""
+        Summarize papers in the following format: 
+        1. Title: <title>
+        2. Summary: <summary>
+        
+        These are the papers:
+        
+"""
+
+        # TODO: add link to paper
+        for paper in list_of_papers:
+            _prompt += f"""{paper}\n"""
 
         return _prompt
-
-    def get_dataframe(self):
-        return self.dataframe
 
     def get_dummy_data(self):
         return self.dummydata
