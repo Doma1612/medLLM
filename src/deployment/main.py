@@ -36,7 +36,6 @@ def get_list_of_articles(_predictions):
     return _predictions_df["full_text"].tolist()
 
 def response_gen(_prompt):
-    st.spinner("Loading...")
     # Trim input text and tokenize
     _input = DataPreprocessor(_prompt)
     _input.trim_patient_description()
@@ -55,8 +54,6 @@ def response_gen(_prompt):
     # summarize papers
     _prompt = DataPreprocessor().summarize_text_with_format(list_of_articles)
     _response = generate_response(_prompt, generator)
-
-    st.success()
 
     # type out response word by word
     for word in _response.split():
