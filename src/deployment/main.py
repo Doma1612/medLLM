@@ -46,9 +46,9 @@ def get_list_of_articles(_predictions):
 def response_gen(_prompt):
     # Trim input text and tokenize
     symptom_extractor = SymptomExtractor()
-    _prompt = symptom_extractor.extract_symptoms(_prompt)
-    _input = DataPreprocessor(_prompt)
-    _input.trim_patient_description()
+    _symptoms = symptom_extractor.extract_symptoms(_prompt)
+    print(_symptoms)
+    _input = DataPreprocessor(_symptoms)
     tokenized_input = _input.tokenize_data()
     tokenized_input = {k: v.to(device) for k, v in tokenized_input.items()}
 

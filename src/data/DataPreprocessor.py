@@ -4,7 +4,7 @@ from src.data.deep_symptom_extraction import SymptomExtractor
 symptom_extractor = SymptomExtractor()
 
 class DataPreprocessor():
-    def __init__(self, input_text = None):
+    def __init__(self, symptoms = None):
         self.dummydata = [
             ["Cold, Sneeze, Cough", [1, 2, 3]],
             ["Stomach Hurt, Headache", [4, 5, 6]],
@@ -29,42 +29,12 @@ class DataPreprocessor():
         ]
         self.dummydata = self.dummydata *50
         # create empty dict with labels
-        self.patient_data = {}
-        self.input_text = input_text
-
-    def trim_patient_description(self, input_text = None):
-        description = self.input_text if input_text is None else input_text
-
-        # Extract age
-        age_match = re.search(r'\b(\d{1,3})[- ]?(year[- ]old|years? old)\b', description, re.IGNORECASE)
-        age = age_match.group(1) + " years old" if age_match else "Age not specified"
-
-        # Extract gender
-        gender_match = re.search(r'\b(male|female|man|woman)\b', description, re.IGNORECASE)
-        gender = gender_match.group(1).capitalize() if gender_match else "Gender not specified"
-
-        # Define conditions and symptoms keywords
-        condition_keywords = ["COVID-19", "pneumonia", "diabetes", "hypertension", "stroke", "cancer", "infection", "fracture"]
-
-        # Extract conditions and symptoms
-        conditions = [kw for kw in condition_keywords if re.search(rf'\b{kw}\b', description, re.IGNORECASE)]
-        symptoms = [kw for kw in symptom_extractor.symptom_set if re.search(rf'\b{kw}\b', description, re.IGNORECASE)]
-
-        # Extract durations and time references
-        time_matches = re.findall(r'\b\d+\s+(day|week|month|year)[s]?\b', description, re.IGNORECASE)
-        duration = ", ".join(time_matches) if time_matches else "No time details"
-
-        # Combine extracted details into a summary
-        conditions_text = ", ".join(conditions) if conditions else "No specific conditions mentioned"
-        symptoms_text = ", ".join(symptoms) if symptoms else "No specific symptoms mentioned"
-        summary = f"{age}, {gender}. Conditions: {conditions_text}. Symptoms: {symptoms_text}. Duration: {duration}."
-
-        # add to dataframe
-        self.patient_data = {'Age': age, 'Gender': gender, 'Conditions': conditions_text, 'Symptoms': symptoms_text, 'Duration': duration, 'Description Summary': summary}
+        self.symptoms = symptoms
 
     def tokenize_data(self):
         tokenizer = AutoTokenizer.from_pretrained("FacebookAI/roberta-base")
-        symptoms = self.patient_data['Symptoms']
+        # TODO: get list of symptoms
+        symptoms = self.symptoms
         tokenized_inputs = tokenizer(symptoms, padding='max_length', max_length=1000, return_tensors='pt')
         return tokenized_inputs
 

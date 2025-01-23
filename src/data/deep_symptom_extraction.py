@@ -39,7 +39,7 @@ ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 class SymptomExtractor:
-    def __init__(self, symptoms):
+    def __init__(self):
         # Load the SciSpaCy model for medical text
         self.nlp = spacy.load("en_core_sci_sm")
         # List of symptoms to match
@@ -53,15 +53,14 @@ class SymptomExtractor:
             word.text for word in self.nlp(text).ents if word.text.lower() in self.symptom_set
         ]
 
-if __name__ == "__main__":
-# Example usage:
+    # Example usage:
 
     # Create an instance of SymptomExtractor with your symptom list
-    symptom_extractor = SymptomExtractor(symptom_list)
+    #symptom_extractor = SymptomExtractor(symptom_list)
 
     # Example input text for the extraction
-    text = "The patient shows signs of fever, continuous coughing, and shortness of breath."
+    #text = "The patient shows signs of fever, continuous coughing, and shortness of breath."
 
     # Extract symptoms from the text
-    extracted_symptoms = symptom_extractor.extract_symptoms(text)
-    print("Extracted Symptoms:", extracted_symptoms)
+    #extracted_symptoms = symptom_extractor.extract_symptoms(text)
+    #print("Extracted Symptoms:", extracted_symptoms)
