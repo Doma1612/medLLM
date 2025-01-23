@@ -65,7 +65,7 @@ class DataPreprocessor():
     def tokenize_data(self):
         tokenizer = AutoTokenizer.from_pretrained("FacebookAI/roberta-base")
         symptoms = self.patient_data['Symptoms']
-        tokenized_inputs = tokenizer(symptoms, padding='max_length', max_length=50, return_tensors='pt')
+        tokenized_inputs = tokenizer(symptoms, padding='max_length', max_length=1000, return_tensors='pt')
         return tokenized_inputs
 
     def summarize_text_with_format(self, list_of_papers):

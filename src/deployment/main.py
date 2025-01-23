@@ -7,30 +7,29 @@ import os
 
 from src.model.roberta import CustomRobertaForSequenceClassification
 from src.data.DataPreprocessor import DataPreprocessor
-from src.data.deep_symptom_extraction import extract_symptoms
+from src.data.deep_symptom_extraction import SymptomExtractor, extract_symptoms
 from src.model import generate_response
 from src.data.deep_symptom_extraction import symptom_list
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-# set environment variable for cuda
+# Initialize the device
 if torch.cuda.is_available():
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+    device = torch.device("cuda")  # NVIDIA GPU with CUDA
+    print("Using device: CUDA (NVIDIA GPU)")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps")  # Apple Silicon GPU (MPS)
+    print("Using device: MPS (Apple Silicon GPU)")
+else:
+    device = torch.device("cpu")  # Fallback to CPU
+    print("Using device: CPU")
 
 # initialize roberta model
-#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 model = CustomRobertaForSequenceClassification(num_labels=20000).to(device)
 model.load_model(ROOT_DIR)
 
 # initialize generator
-
-# If using NVIDIA-GPU
-#device = "cuda" if torch.cuda.is_available() else "cpu"
-
-# If using Apple M1 / M2 / M2 GPU
-device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-
 model_name = "meta-llama/Llama-3.2-1B-Instruct"
 generator = pipeline(model=model_name, device=device, torch_dtype=torch.float16, task="summarization")
 
@@ -46,6 +45,8 @@ def get_list_of_articles(_predictions):
 
 def response_gen(_prompt):
     # Trim input text and tokenize
+    symptom_extractor = SymptomExtractor()
+    _prompt = symptom_extractor.extract_symptoms(_prompt)
     _input = DataPreprocessor(_prompt)
     _input.trim_patient_description()
     tokenized_input = _input.tokenize_data()
@@ -62,7 +63,7 @@ def response_gen(_prompt):
 
     # summarize papers
     _prompt = DataPreprocessor().summarize_text_with_format(list_of_articles)
-    _response = generate_response(_prompt, generator)
+    _response = generate_response(_prompt, generator, len(list_of_articles))
 
     # type out response word by word
     for word in _response.split():

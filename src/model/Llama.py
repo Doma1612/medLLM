@@ -1,7 +1,7 @@
 import torch.cuda
 from torch.cuda.amp import autocast
 
-def generate_response(_prompt, _generator):
+def generate_response(_prompt, _generator, num_of_articles: int):
 
     with autocast():
         response = _generator(
@@ -9,7 +9,7 @@ def generate_response(_prompt, _generator):
             do_sample = False,
             temperature = 1.0,
             top_p = 1,
-            max_new_tokens = 20,
+            max_new_tokens = num_of_articles*200,
         )
 
     torch.cuda.empty_cache()
