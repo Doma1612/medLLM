@@ -7,7 +7,7 @@ import os
 
 from src.model.roberta import CustomRobertaForSequenceClassification
 from src.data.DataPreprocessor import DataPreprocessor
-from src.data.deep_symptom_extraction import SymptomExtractor, extract_symptoms
+from src.data.deep_symptom_extraction import SymptomExtractor
 from src.model import generate_response
 from src.data.deep_symptom_extraction import symptom_list
 
