@@ -7,7 +7,9 @@ import os
 
 from src.model.roberta import CustomRobertaForSequenceClassification
 from src.data.DataPreprocessor import DataPreprocessor
+from src.data.deep_symptom_extraction import extract_symptoms
 from src.model import generate_response
+from src.data.deep_symptom_extraction import symptom_list
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -16,12 +18,19 @@ if torch.cuda.is_available():
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
 # initialize roberta model
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 model = CustomRobertaForSequenceClassification(num_labels=20000).to(device)
 model.load_model(ROOT_DIR)
 
 # initialize generator
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+# If using NVIDIA-GPU
+#device = "cuda" if torch.cuda.is_available() else "cpu"
+
+# If using Apple M1 / M2 / M2 GPU
+device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+
 model_name = "meta-llama/Llama-3.2-1B-Instruct"
 generator = pipeline(model=model_name, device=device, torch_dtype=torch.float16, task="summarization")
 
