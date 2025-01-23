@@ -1,5 +1,7 @@
 import re
 from transformers import AutoTokenizer
+from src.data.deep_symptom_extraction import extract_symptoms
+from src.data.deep_symptom_extraction import symptom_set
 
 class DataPreprocessor():
     def __init__(self, input_text = None):
@@ -43,11 +45,10 @@ class DataPreprocessor():
 
         # Define conditions and symptoms keywords
         condition_keywords = ["COVID-19", "pneumonia", "diabetes", "hypertension", "stroke", "cancer", "infection", "fracture"]
-        symptom_keywords = ["fever", "fatigue", "pain", "cough", "shortness of breath", "nausea", "vomiting", "dizziness"]
 
         # Extract conditions and symptoms
         conditions = [kw for kw in condition_keywords if re.search(rf'\b{kw}\b', description, re.IGNORECASE)]
-        symptoms = [kw for kw in symptom_keywords if re.search(rf'\b{kw}\b', description, re.IGNORECASE)]
+        symptoms = [kw for kw in symptom_set if re.search(rf'\b{kw}\b', description, re.IGNORECASE)]
 
         # Extract durations and time references
         time_matches = re.findall(r'\b\d+\s+(day|week|month|year)[s]?\b', description, re.IGNORECASE)
