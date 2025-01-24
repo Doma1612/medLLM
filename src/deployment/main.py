@@ -26,7 +26,7 @@ else:
     print("Using device: CPU")
 
 # initialize roberta model
-model = CustomRobertaForSequenceClassification(num_labels=20000).to(device)
+model = CustomRobertaForSequenceClassification(num_labels=27869).to(device)
 model.load_model(ROOT_DIR)
 
 # initialize generator
@@ -35,10 +35,10 @@ generator = pipeline(model=model_name, device=device, torch_dtype=torch.float16,
 
 # get paper data
 full_text_papers = pd.read_csv(f"{ROOT_DIR}/data/pmc_patients/processed/full_texts_combined.csv")
-full_text_papers_ids = pd.read_csv(f"{ROOT_DIR}/data/pmc_patients/Summary_data/list_of_articles_with_full_text.csv")
+full_text_papers_ids = pd.read_csv(f"{ROOT_DIR}/notebooks/extended_list_of_articles.csv")
 
 def get_list_of_articles(_predictions):
-    paper_ids = full_text_papers_ids[full_text_papers_ids["index"].isin(_predictions)]
+    paper_ids = full_text_papers_ids[full_text_papers_ids.iloc[:, 0].isin(_predictions)]
 
     _predictions_df = full_text_papers[full_text_papers["PMID"].isin(paper_ids["article"])]
     return _predictions_df["full_text"].tolist()
@@ -48,21 +48,19 @@ def response_gen(_prompt):
     symptom_extractor = SymptomExtractor()
     _symptoms = symptom_extractor.extract_symptoms(_prompt)
     print(_symptoms)
-    _input = DataPreprocessor(_symptoms)
-    tokenized_input = _input.tokenize_data()
-    tokenized_input = {k: v.to(device) for k, v in tokenized_input.items()}
 
     # get model
-    # TODO: uncomment next line
-    # predictions = model.predict(tokenized_input)
-    # TODO: remove test predictions
-    predictions = [89]
+    predictions = model.predict(_symptoms)
+    print(predictions)
+    predictions = list(predictions[0])
+    print(predictions)
 
     # map to paper ids
     list_of_articles = get_list_of_articles(predictions)
 
     # summarize papers
-    _prompt = DataPreprocessor().summarize_text_with_format(list_of_articles)
+    # TODO: list_of_articles size
+    _prompt = DataPreprocessor().summarize_text_with_format(list_of_articles[0])
     _response = generate_response(_prompt, generator, len(list_of_articles))
 
     # type out response word by word
