@@ -39,7 +39,7 @@ full_text_papers_ids = pd.read_csv(f"{ROOT_DIR}/notebooks/extended_list_of_artic
 
 def get_list_of_articles(_predictions):
     paper_ids = full_text_papers_ids[full_text_papers_ids.iloc[:, 0].isin(_predictions)]
-
+    print(paper_ids)
     _predictions_df = full_text_papers[full_text_papers["PMID"].isin(paper_ids["article"])]
     return _predictions_df["full_text"].tolist()
 
@@ -57,7 +57,6 @@ def response_gen(_prompt):
 
     # map to paper ids
     list_of_articles = get_list_of_articles(predictions)
-
     # summarize papers
     # TODO: list_of_articles size
     _prompt = DataPreprocessor().summarize_text_with_format(list_of_articles[0])
