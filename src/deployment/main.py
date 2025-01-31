@@ -9,7 +9,6 @@ from src.model.roberta import CustomRobertaForSequenceClassification
 from src.data.DataPreprocessor import DataPreprocessor
 from src.data.deep_symptom_extraction import SymptomExtractor
 from src.model import generate_response
-from src.data.deep_symptom_extraction import symptom_list
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -25,13 +24,9 @@ else:
     device = torch.device("cpu")  # Fallback to CPU
     print("Using device: CPU")
 
-# initialize roberta model
-model = CustomRobertaForSequenceClassification(num_labels=27869).to(device)
-model.load_model(ROOT_DIR)
-
 # initialize generator
 model_name = "meta-llama/Llama-3.2-1B-Instruct"
-generator = pipeline(model=model_name, device=device, torch_dtype=torch.float16, task="summarization")
+generator = pipeline(model=model_name, device=device, torch_dtype=torch.float16)
 
 # get paper data
 full_text_papers = pd.read_csv(f"{ROOT_DIR}/data/pmc_patients/processed/full_texts_combined.csv")
@@ -49,25 +44,41 @@ def response_gen(_prompt):
     _symptoms = symptom_extractor.extract_symptoms(_prompt)
     print(_symptoms)
 
+    # initialize roberta model
+    torch.cuda.empty_cache()
+    model = CustomRobertaForSequenceClassification(num_labels=27869).to(device)
+    model.load_model(ROOT_DIR)
+
     # get model
     predictions = model.predict(_symptoms)
     print(predictions)
     predictions = list(predictions[0])
     print(predictions)
 
+    # free up memory
+    del model
+    torch.cuda.empty_cache()
+
     # map to paper ids
     list_of_articles = get_list_of_articles(predictions)
     # summarize papers
+    # split into chunks of 2
     # TODO: list_of_articles size
-    _prompt = DataPreprocessor().summarize_text_with_format(list_of_articles[0])
-    _response = generate_response(_prompt, generator, len(list_of_articles))
+    list_of_articles = list_of_articles[0]
+    # split the string in the middle into two parts
+    list_of_articles = [list_of_articles[:len(list_of_articles)//2], list_of_articles[len(list_of_articles)//2:]]
+    print(len(list_of_articles))
+
+    _response = "summarize the results of the medical information with 100 words: "
+    print(_response)
+    for _prompt in list_of_articles:
+        print("TEST")
+        _response += generate_response(_prompt, generator, len(_prompt))
 
     # type out response word by word
     for word in _response.split():
         yield word + " "
-        time.sleep(0.05)
-
-    torch.cuda.empty_cache()
+       # time.sleep(0.05)
 
 # Initialize chat history
 if "messages" not in st.session_state:

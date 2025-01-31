@@ -9,9 +9,9 @@ def generate_response(_prompt, _generator, num_of_articles: int):
             response = _generator(
                 _prompt,
                 do_sample = False,
-                temperature = 1.0,
-                top_p = 1,
-                max_new_tokens = num_of_articles*200,
+                temperature = 0.3,
+                top_p = 0.9,
+                max_new_tokens = 200,
             )
 
-    return response[0]['summary_text']
+    return response[0]['generated_text']
