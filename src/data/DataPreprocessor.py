@@ -1,6 +1,4 @@
 import spacy
-from src.data.deep_symptom_extraction import SymptomExtractor
-symptom_extractor = SymptomExtractor()
 
 class DataPreprocessor():
     def __init__(self, symptoms = None):

@@ -2,6 +2,7 @@ import streamlit as st
 from transformers import pipeline
 import pandas as pd
 import torch
+import time
 import os
 
 from src.model.roberta import CustomRobertaForSequenceClassification
@@ -80,7 +81,7 @@ def response_gen(_prompt):
     # type out response word by word
     for word in _response.split(r"\s+"):
         yield word + " "
-       # time.sleep(0.02)
+        time.sleep(0.02)
 
 # Initialize chat history
 if "messages" not in st.session_state:
