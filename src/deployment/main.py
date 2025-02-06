@@ -7,60 +7,78 @@ import os
 
 from src.model.roberta import CustomRobertaForSequenceClassification
 from src.data.DataPreprocessor import DataPreprocessor
+from src.data.deep_symptom_extraction import SymptomExtractor
 from src.model import generate_response
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-# set environment variable for cuda
+# Initialize the device
 if torch.cuda.is_available():
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-
-# initialize roberta model
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = CustomRobertaForSequenceClassification(num_labels=20000).to(device)
-model.load_model(ROOT_DIR)
+    device = torch.device("cuda")  # NVIDIA GPU with CUDA
+    print("Using device: CUDA (NVIDIA GPU)")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps")  # Apple Silicon GPU (MPS)
+    print("Using device: MPS (Apple Silicon GPU)")
+else:
+    device = torch.device("cpu")  # Fallback to CPU
+    print("Using device: CPU")
 
 # initialize generator
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model_name = "meta-llama/Llama-3.2-1B-Instruct"
-generator = pipeline(model=model_name, device=device, torch_dtype=torch.float16, task="summarization")
+generator = pipeline(model=model_name, device=device, torch_dtype=torch.float16)
 
 # get paper data
 full_text_papers = pd.read_csv(f"{ROOT_DIR}/data/pmc_patients/processed/full_texts_combined.csv")
-full_text_papers_ids = pd.read_csv(f"{ROOT_DIR}/data/pmc_patients/Summary_data/list_of_articles_with_full_text.csv")
+full_text_papers_ids = pd.read_csv(f"{ROOT_DIR}/notebooks/extended_list_of_articles.csv")
 
 def get_list_of_articles(_predictions):
-    paper_ids = full_text_papers_ids[full_text_papers_ids["index"].isin(_predictions)]
-
+    paper_ids = full_text_papers_ids[full_text_papers_ids.iloc[:, 0].isin(_predictions)]
+    print(paper_ids)
     _predictions_df = full_text_papers[full_text_papers["PMID"].isin(paper_ids["article"])]
     return _predictions_df["full_text"].tolist()
 
 def response_gen(_prompt):
     # Trim input text and tokenize
-    _input = DataPreprocessor(_prompt)
-    _input.trim_patient_description()
-    tokenized_input = _input.tokenize_data()
-    tokenized_input = {k: v.to(device) for k, v in tokenized_input.items()}
+    symptom_extractor = SymptomExtractor()
+    _symptoms = symptom_extractor.extract_symptoms(_prompt)
+    print(_symptoms)
+
+    # initialize roberta model
+    torch.cuda.empty_cache()
+    model = CustomRobertaForSequenceClassification(num_labels=27869).to(device)
+    model.load_model(ROOT_DIR)
 
     # get model
-    # TODO: uncomment next line
-    # predictions = model.predict(tokenized_input)
-    # TODO: remove test predictions
-    predictions = [89]
+    predictions = model.predict(_symptoms)
+    print(predictions)
+    predictions = list(predictions[0])
+    print(predictions)
+
+    # free up memory
+    del model
+    torch.cuda.empty_cache()
 
     # map to paper ids
     list_of_articles = get_list_of_articles(predictions)
-
     # summarize papers
-    _prompt = DataPreprocessor().summarize_text_with_format(list_of_articles)
-    _response = generate_response(_prompt, generator)
+    # split into chunks of 2
+    # TODO: list_of_articles size
+    list_of_articles = list_of_articles[0]
+    # split the string in the middle into two parts
+    list_of_articles = [list_of_articles[:len(list_of_articles)//2], list_of_articles[len(list_of_articles)//2:]]
+    print(len(list_of_articles))
+
+    _response = "summarize the results of the medical information with 100 words: "
+    print(_response)
+    for _prompt in list_of_articles:
+        print("TEST")
+        _response += generate_response(_prompt, generator, len(_prompt))
 
     # type out response word by word
     for word in _response.split():
         yield word + " "
-        time.sleep(0.05)
-
-    torch.cuda.empty_cache()
+       # time.sleep(0.05)
 
 # Initialize chat history
 if "messages" not in st.session_state:
