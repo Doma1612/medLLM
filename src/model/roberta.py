@@ -1,4 +1,3 @@
-import ast
 import os.path
 from torch import nn
 import torch
@@ -44,7 +43,3 @@ class CustomRobertaForSequenceClassification(nn.Module):
             probs = torch.sigmoid(logits)
             top_k_indices = self.top_k_above_threshold(probs)
             return top_k_indices, probs
-
-#model = CustomRobertaForSequenceClassification()
-#model.load_model(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
-#model.predict(["Cold, Sneeze, Cough"])
