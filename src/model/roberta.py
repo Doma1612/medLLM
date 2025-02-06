@@ -175,6 +175,15 @@ model.load_state_dict(torch.load(homedir+"/llmrobertalaststate.pth"))
 
 
 
+def top_k_above_threshold(tensor, k=2, threshold=0.4):
+    above_threshold_indices = (tensor > threshold).nonzero(as_tuple=True)[1]
+    values_above_threshold = tensor[0, above_threshold_indices]
+    sorted_values, sorted_indices = torch.sort(values_above_threshold, descending=True)
+    num_to_return = min(k, sorted_values.numel())
+    result_indices = above_threshold_indices[sorted_indices[:num_to_return]]
+    
+    return result_indices.tolist()
+
 def eval(input):
     model.eval()
 
@@ -186,11 +195,7 @@ def eval(input):
     out = model(inp, attention_mask = att)
 
     out = torch.sigmoid(out)
-    out = out > 0.8
-    out = torch.nonzero(out, as_tuple=True)
-
-    papers = out[1].tolist()
-    papers = torch.topk(torch.tensor(papers),3)
-    print(papers[0])
+    print(out)
+    print(top_k_above_threshold(out))
 
 eval("Cold, Sneeze, Cough")
