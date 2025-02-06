@@ -2,12 +2,10 @@ import streamlit as st
 from transformers import pipeline
 import pandas as pd
 import torch
-import time
 import os
 
 from src.model.roberta import CustomRobertaForSequenceClassification
 from src.data.DataPreprocessor import DataPreprocessor
-from src.data.deep_symptom_extraction import SymptomExtractor
 from src.model import generate_response
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -40,8 +38,8 @@ def get_list_of_articles(_predictions):
 
 def response_gen(_prompt):
     # Trim input text and tokenize
-    symptom_extractor = SymptomExtractor()
-    _symptoms = symptom_extractor.extract_symptoms(_prompt)
+    data_preprocessor = DataPreprocessor()
+    _symptoms = data_preprocessor.extract_symptoms(_prompt)
     print(_symptoms)
 
     # initialize roberta model
@@ -53,7 +51,6 @@ def response_gen(_prompt):
     predictions = model.predict(_symptoms)
     print(predictions)
     predictions = list(predictions[0])
-    print(predictions)
 
     # free up memory
     del model
@@ -62,23 +59,28 @@ def response_gen(_prompt):
     # map to paper ids
     list_of_articles = get_list_of_articles(predictions)
     # summarize papers
-    # split into chunks of 2
-    # TODO: list_of_articles size
-    list_of_articles = list_of_articles[0]
-    # split the string in the middle into two parts
-    list_of_articles = [list_of_articles[:len(list_of_articles)//2], list_of_articles[len(list_of_articles)//2:]]
-    print(len(list_of_articles))
+    # to reduce memory ussage, split into chunks of 2
+    list_of_articles = [[article[:len(article)//2],article[len(article)//2:]] for article in list_of_articles]
 
-    _response = "summarize the results of the medical information with 100 words: "
-    print(_response)
-    for _prompt in list_of_articles:
-        print("TEST")
-        _response += generate_response(_prompt, generator, len(_prompt))
+    _halves_summarized = []
+
+    # summarize halves individually
+    for article in list_of_articles:
+        for halve in article:
+            _prompt = data_preprocessor.summarize_text_with_format(halve)
+            _halves_summarized.append(generate_response(_prompt, generator, len(_prompt)))
+
+    _halves_summarized = [halve[141:] for halve in _halves_summarized]
+    print(_halves_summarized)
+
+    _response = ""
+    for i in range(0,len(_halves_summarized),2):
+        _response += _halves_summarized[i] + _halves_summarized[i+1] + "  \n  \n  \n"
 
     # type out response word by word
-    for word in _response.split():
+    for word in _response.split(r"\s+"):
         yield word + " "
-       # time.sleep(0.05)
+       # time.sleep(0.02)
 
 # Initialize chat history
 if "messages" not in st.session_state:

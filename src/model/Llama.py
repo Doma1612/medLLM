@@ -14,4 +14,6 @@ def generate_response(_prompt, _generator, num_of_articles: int):
                 max_new_tokens = 200,
             )
 
+    torch.cuda.empty_cache()
+    torch.cuda.ipc_collect()
     return response[0]['generated_text']
