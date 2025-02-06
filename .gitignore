@@ -7,3 +7,8 @@ __pycache__/
 # ignore editor files
 .vscode/
 .idea/
+
+# ignore pth files
+*.pth
+
+full_texts_combined.csv
