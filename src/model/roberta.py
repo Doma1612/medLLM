@@ -7,7 +7,7 @@ from transformers import RobertaForSequenceClassification, AutoTokenizer, Robert
 class CustomRobertaForSequenceClassification(nn.Module):
     def __init__(self, pretrained_model_name='FacebookAI/roberta-base', num_labels=10):
         super(CustomRobertaForSequenceClassification, self).__init__()
-        self.roberta = RobertaForSequenceClassification(RobertaConfig(num_labels = num_labels))
+        self.roberta = RobertaForSequenceClassification.from_pretrained(pretrained_model_name,num_labels=num_labels)
         self.num_labels = num_labels
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.roberta.to(self.device)
