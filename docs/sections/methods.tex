@@ -1,0 +1,106 @@
+\subsection{Dataset}
+The PMC-Patients dataset is a large-scale dataset designed to support retrieval-based clinical decision support tasks [PMC dataset]. It is aggregated from PubMed Central articles, along with citation relationships. The key components of the dataset include patient summaries, which are text-based descriptions of patient cases sourced from PMC articles, a total of 3.1 million Patient-to-Article Relevance Annotations, connecting patient cases to relevant PubMed articles and 293,000 patient-to-patient similarity annotations which are identifying similar patient cases based on clinical characteristics. The PMC dataset is obtained by performing data cleaning; eliminating non-human cases, less than 10 word patient summaries and removal of columns with missing values. The dataset supports two primary retrieval based tasks in clinical decision support which are Patient-to-Article Retrieval, retrieving relevant scientific literature for a given patient summary as well as Patient-To-Patient Retrieval, that outputs similar patients from the dataset. 
+With its structured annotations, PMC-Patients stands out as one of the largest publicly available datasets for patient-level information retrieval and clinical decision support.
+The use of the PMC-Patients is beneficial in several ways. One argument is that with over 167,000 patient case summaries, that dataset covers a wide range of clinical scenarios, making it well-suited for training machine learning models. Beyond this, the high-quality relevance and similarity annotations enhance retrieval tasks. Additionally, the PMC-Patients dataset as an openly available dataset ensures transparency and reproducibility in research. The dataset also aligns with the aim to classify patients based on their descriptions to articles and retrieve the articles afterward.
+
+As part of the data preparation process, the original PMC Patients dataset was first reduced to a manageable sample of 10,000 cases, prioritizing articles with open access. Patient information is organized using a unique patient ID, with a specific article assigned to each record via the associated PubMed ID (PMID). The Europe PMC Restful web services are used to check whether each article complies with Open Access standards [https://europepmc.org/RestfulWebService]. In this way, only those articles that are freely accessible are included in the further processing procedure. The data is then enriched with bibliographic information. For example, the title, DOI, authors, year of publication, journal and abstract are extracted in order to comprehensively map the context of the articles. For articles classified as open access, the URL of the complete PDF document is also determined, which enables direct access to the full text PDF file. In the next phase, the PDF documents of the selected articles are automatically downloaded and processed. The contents of the PDFs are converted into plain text page by page. This extracted text, together with the associated PubMed ID, is stored in a structured form to make it available for subsequent tasks such as automatic summarization by a Large Language Model. This multi-stage workflow ensures that the 16889 fully accessible articles with enriched metadata are included in the further processing. This enables a targeted use of the information in the context of clinical decision support.
+In the next processing step, the already extracted full texts are further refined and merged into a consolidated data set that serves as the basis for machine learning. First, several CSV files in which the PDF extractions are stored are loaded and systematically freed from duplicates. This is done using the unique PubMed IDs. Missing or incorrectly downloaded articles, for example those for which the download failed, are specifically removed to ensure data quality. At the same time, the list of articles that was originally kept in a separate dataset is compared with the consolidated full-text dataset. Only those articles that actually have a complete text are retained. The articles marked as relevant are then extracted from the patient information and their frequency of occurrence is analyzed. Only articles that appear in at least two patient descriptions, an indication of their relevance in terms of content, are included in the final data set. To facilitate integration into machine learning procedures, these relevant articles are converted into numerical indices. In addition, extracted symptom descriptions are also added from the patient data, resulting in an enriched data set that includes patient IDs, filtered and indexed article IDs as well as relevant clinical features. 
+
+\subsection{Symptom Extraction}
+Symptom extraction is a crucial process in medical text analysis, enabling efficient identification of patient symptoms from lengthy textual records. In this approach, we utilize Natural Language Processing (NLP) techniques to extract relevant symptoms from patient medical summaries. This method enhances the automation of clinical data processing, reducing manual efforts and improving accuracy in symptom identification. The key steps are further visualised in Figure 1. 
+\begin{enumerate}
+    \item input
+    The data used for symptom extraction is sourced from PMC records stored in a structured CSV file. These records contain textual descriptions of patient symptoms, diagnoses, and treatments. Medical text often includes domain-specific terminology and abbreviations, a specialized approach is required to extract meaningful symptom-related information accurately. 
+
+    \item pre-processing
+    A predefined list of symptoms is utilised, which is gathered from NHS, Medline PLus and Mayo Clinic.  The NLP model preprocesses the medical text by performing:
+- Tokenization
+- Normalisation
+- Named Entity Recognition
+- Stopword Removal
+The preprocessing step refines the textual data, ensuring that the extracted symptoms align with standardized medical terminologies and reducing noise in the dataset 
+
+    \item models for extraction
+    SciSpaCy, a specialized NLP library tailored for biomedical text processing, is employed to detect symptoms within medical records. It utilizes pre-trained models and medical ontologies to accurately recognize symptom-related terms. The extracted symptom list is then cross-checked against recognized medical entities to ensure accuracy and eliminate false positives.
+
+
+    \item data integration
+    Once the symptoms are extracted, they are systematically stored in a new column within the dataset for each patient. The patient column containing medical descriptions is passed through the SciSpaCy model, and the output is stored as a new column containing the extracted symptoms.
+\end{enumerate}
+Why were the models chosen? 
+SciSpaCy was selected due to its robust capabilities in biomedical text processing. Unlike generic NLP libraries, SciSpaCy is specifically designed to handle complex medical terminology, making it well-suited for symptom extraction. Key reasons for its preference include:
+\begin{itemize}
+    \item Pre-Trained Medical Models: SciSpaCy includes models trained on large-scale biomedical datasets, allowing for high-accuracy symptom recognition.
+    \item Integration with Medical Knowledge Bases: It supports linking extracted terms to medical ontologies such as UMLS, enhancing reliability.
+    \item Scalability: SciSpaCy is optimized for handling large datasets, making it ideal for processing extensive patient records.
+    \item Customization and Flexibility: The framework allows for fine-tuning models and adding domain-specific rules, making it adaptable to various medical applications.
+\end{itemize}
+Exceptional Cases: Taking an example medical string into account from our dataset 
+“Early Physical Therapist Interventions for Patients With COVID-19 in the Acute Care Hospital: A Case Report Series,"This 60-year-old male was hospitalized due to moderate ARDS from COVID-19 with symptoms of fever, dry cough, and dyspnea. We encountered several difficulties during physical therapy on the acute ward. First, any change of position or deep breathing triggered coughing attacks that induced oxygen desaturation and dyspnea. To avoid rapid deterioration and respiratory failure, we instructed and performed position changes very slowly and step-by-step. In this way, a position change to the 135° prone position () took around 30 minutes. This approach was well tolerated and increased oxygen saturation, for example, on day 5 with 6 L/min of oxygen from 93\% to 97\%. Second, we had to adapt the breathing exercises to avoid prolonged coughing and oxygen desaturation. Accordingly, we instructed the patient to stop every deep breath before the need to cough and to hold inspiration for better air distribution. In this manner, the patient performed the breathing exercises well and managed to increase his oxygen saturation. Third, the patient had difficulty maintaining sufficient oxygen saturation during physical activity. However, with close monitoring and frequent breaks, he managed to perform strength and walking exercises at a low level without any significant deoxygenation. Exercise progression was low on days 1 to 5, but then increased daily until hospital discharge to a rehabilitation clinic on day 10.”
+
+The model correctly extracts symptoms such as 'dry cough,' 'dyspnea,' 'cough,' 'coughing,' and 'COVID-19.' However, it also incorrectly identifies non-symptoms such as 'acute ward,' 'air distribution,' 'physical therapy,' and 'position.' To improve symptom extraction, refining the model's training data and incorporating domain-specific filtering techniques can help reduce false positives. Additionally, handling ambiguous terms and context-dependent cases—such as 'position' in a medical posture versus a symptom-related description can further enhance accuracy.
+
+
+\subsection{Encoder}
+
+
+\subsection{Decoder}
+To retrieve the corresponding full-text papers from the output of the encoder, which is a list of indices, the previously created mapping of paper IDs to indices is reused. Using this mapping, the list of paper IDs is obtained, and their respective full-text information is extracted from the full-text CSV by matching the paper IDs.
+Since the full-text papers can span multiple pages, making their content accessible and understandable in a short time frame requires summarization. This allows users to quickly grasp the key insights of each paper without having to read them in full.
+A variety of decoder language models (LLMs) were considered for this task, including Mistral, LLaMA 2, and LLaMA 3.3. However, due to hardware constraints, LLaMA 3.2 1B Instruct was ultimately chosen. Before passing the full-text papers to the LLaMA model for summarization, additional considerations were necessary to manage hardware limitations effectively.
+To optimize memory usage, the RoBERTa model was re-initialized with each patient summary input and deleted before using the LLaMA model. This approach resulted in a negligible trade-off between initialization time and memory usage. Furthermore, instead of processing each full-text paper as a whole, the papers were split into halves to accommodate the GPU's memory limitations.
+Each section of a paper was appended to a structured prompt containing summarization instructions. Once all papers and their respective sections were processed, the prompt was removed from each summary. The summarized sections of each paper were then concatenated to reconstruct a single coherent summary per paper. Finally, all individual paper summaries were combined into a single output string before being returned to the user interface.
+
+\subsection{Evaluation methods}
+For measuring medical text summarization quality, a set of proven metrics is used. The metrics assess different aspects of the generated summaries, including lexical similarity, phrase accuracy, fluency, semantic relevance, and synonym detection. The particular evaluation methods and how they are used in medical summarization are described below.
+\begin{enumerate}
+    \item BLEU (Bilingual Evaluation Understudy)
+Application: BLEU measures similarity between generated summary and reference text in terms of n-gram overlaps. It employs precision-scaled scoring, wherein n-grams in the generated text are matched with n-grams in the reference text, and a brevity penalty is used to avoid very short summaries.
+Procedure:
+Tokenize generated summary and reference text.
+Get unigrams, bigrams, trigrams, and higher-order n-grams.
+Calculate overlapping n-gram precision.
+Apply a brevity penalty if the summary is less than the reference.
+Applicability to Medical Summarization: BLEU can preserve key medical terms and phrases unaltered in the summary. However, since it computes exact word overlaps, at times it may also lose the overall meaning, which is extremely crucial in medical environments where synonym use is widespread.
+    \item ROUGE-1 (Recall-Oriented Understudy for Gisting Evaluation - Unigram Overlap)
+Application: ROUGE-1 estimates the frequency of unique keywords by calculating the recall of intersecting unigrams between the generated summary and the reference text.
+Procedure:
+Both texts are tokenized.
+Compute the number of matching unigrams between the reference and generated summaries.
+Compute recall by dividing the number of overlapping unigrams by the number of reference summary unigrams.
+Relevance to Medical Summarization: The measure ensures the most important medical keywords, i.e., the diagnoses, treatments, and symptoms, are reflected in the summary. It confirms no important words are omitted, as is desired in medical reporting.
+    \item ROUGE-2 (Bigram Overlap)
+Use: ROUGE-2 measures phrase-level accuracy using bigram (two-word) overlap between system output and reference summaries.
+Process:
+Tokenize both summaries.
+Find bigrams from both summaries.
+Compute recall as the number of exact bigrams over the total number of bigrams in the reference summary.
+Medical Summarization Relevance: By considering matches at the phrase level, this metric helps us assess the contextually correct usage of medical phrases such that medically significant expressions like "chronic kidney disease" are correctly captured in the summary.
+    \item ROUGE-L (Longest Common Subsequence)
+Application: ROUGE-L measures the longest common subsequence of words between the generated abstract and reference text with original word order. This is employed to measure fluency and sentence construction.
+ 
+Procedure:
+Identify the longest common subsequence (LCS) of the two texts.
+Compute recall and F1-score based on the LCS length.
+Relevance to Medical Summarization: This metric ensures that the generated summary is uniform and of the same sentence structure as complex medical sentences, which is crucial for clinical report and note readability and logical flow.
+    \item METEOR (Metric for Evaluation of Translation with Explicit ORdering)
+Application: METEOR is an extension of BLEU with incorporation of synonyms, stemming, and word order along with explicit n-gram overlap. It is particularly useful in medical texts where different words share the same meaning.
+Procedure:
+Tokenize text and apply stemming to normalize word forms.
+Search for exact, stemmed, and synonym matches.
+Compute a harmonic mean of precision and recall with additional penalties on incorrect word order.
+Relevance to Medical Summarization: METEOR is helpful in detecting the semantic similarity of medical terminology (e.g., "hypertension" and "high blood pressure"). This helps to ensure that variation in medical vocabulary is taken into account, leading to improved estimation of summary quality.
+    \item BERTScore
+Application: BERTScore employs transformer-based embeddings to measure the semantic similarity between the reference and generated summaries, rather than word or phrase matching.
+Procedure:
+Embed both summaries within the context of a pre-trained BERT model.
+Compute cosine similarity between token embeddings.
+Average token-level scores to produce a global similarity score.
+Relevance to Medical Summarization: BERTScore ensures that the complex medical information present in the summary maintains its original meaning. Since medical text often involves subtle details, this metric avoids the global message being altered even when different wording is used.
+Using these evaluation criteria, this work ensures that the generated medical summaries are very lexically accurate, semantically true, fluent, and recall-high of critical medical information. Each criterion serves a specific purpose in assessing medical summarization quality:
+BLEU and ROUGE assess key term recall.
+ROUGE-2 and ROUGE-L assess phrase-level precision and fluency.
+METEOR accounts for variations in medical jargon.
+BERTScore ensures semantic preservation of intricate medical information.
+This integrated assessment system helps ensure that medical summaries are informative, accurate, and beneficial for clinical and research purposes.
+\end{enumerate}

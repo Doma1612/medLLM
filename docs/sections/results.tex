@@ -1,0 +1,11 @@
+The system performs modestly, but it is not very accurate as most scores are below 0.7, indicating a room for improvement.
+ BLEU (0.503) - Moderately shows word-for-word accuracy but is relatively low, indicating that the system is poor at exact matches.
+ROUGE-1 (0.639) \& ROUGE-2 (0.574) - Indicate that the system is to a certain extent capturing significant words and phrases but without good recall.
+ROUGE-L (0.582) - Means that the text generated is structurally coherent to a certain degree but is not accurate to a great extent.
+METEOR (0.671) - Better than BLEU and ROUGE since it takes synonyms into consideration, but anything less than 0.7 indicates that semantic accuracy is not high.
+BERTScore (0.768) - The highest of all, suggesting that the system is more capable of capturing semantic meaning than lexical matching, but even this score suggests that there is plenty of room for improvement.
+Comparisons \& Conclusion
+Overall Performance: The system does not do very well as most scores are below 0.7, suggesting that it is not very accurate in lexical and semantic matching.
+Weaknesses: BLEU and ROUGE scores are low, indicating that the generated output does not adhere to reference text closely, either in exact words or in structure.
+Strengths: The system is relatively better in semantic understanding (BERTScore), but even this is not high enough to be consistently strong.
+Conclusion: The system's performance is at best fair but not accurate enough. It performs badly on exact matches, recall, and structural coherence, and word choice and semantic alignment must be improved to achieve higher scores.
