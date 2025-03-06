@@ -75,51 +75,62 @@ For measuring medical text summarization quality, a set of proven metrics is use
 
 \item \textbf{BLEU} (Bilingual Evaluation Understudy)
 Application: BLEU measures similarity between generated summary and reference text in terms of n-gram overlaps. It employs precision-scaled scoring, wherein n-grams in the generated text are matched with n-grams in the reference text, and a brevity penalty is used to avoid very short summaries.
+\\
 Procedure:
 Tokenize generated summary and reference text.
 Get unigrams, bigrams, trigrams, and higher-order n-grams.
 Calculate overlapping n-gram precision.
 Apply a brevity penalty if the summary is less than the reference.
+\\
 Applicability to Medical Summarization: BLEU can preserve key medical terms and phrases unaltered in the summary. However, since it computes exact word overlaps, at times it may also lose the overall meaning, which is extremely crucial in medical environments where synonym use is widespread.
 \\
     \item \textbf{ROUGE-1} (Recall-Oriented Understudy for Gisting Evaluation - Unigram Overlap)
 Application: ROUGE-1 estimates the frequency of unique keywords by calculating the recall of intersecting unigrams between the generated summary and the reference text.
+\\
 Procedure:
 Both texts are tokenized.
 Compute the number of matching unigrams between the reference and generated summaries.
 Compute recall by dividing the number of overlapping unigrams by the number of reference summary unigrams.
+\\
 Relevance to Medical Summarization: The measure ensures the most important medical keywords, i.e., the diagnoses, treatments, and symptoms, are reflected in the summary. It confirms no important words are omitted, as is desired in medical reporting.
 \\
     \item \textbf{ROUGE-2} (Bigram Overlap)
 Use: ROUGE-2 measures phrase-level accuracy using bigram (two-word) overlap between system output and reference summaries.
-Process:
+\\
+Procedure:
 Tokenize both summaries.
 Find bigrams from both summaries.
 Compute recall as the number of exact bigrams over the total number of bigrams in the reference summary.
+\\
 Medical Summarization Relevance: By considering matches at the phrase level, this metric helps us assess the contextually correct usage of medical phrases, such that medically significant expressions like "chronic kidney disease" are correctly captured in the summary.
 \\
     \item \textbf{ROUGE-L} (Longest Common Subsequence)
 Application: ROUGE-L measures the longest common subsequence of words between the generated abstract and reference text with original word order. This is employed to measure fluency and sentence construction.
- 
+\\
 Procedure:
 Identify the longest common subsequence (LCS) of the two texts.
 Compute recall and F1-score based on the LCS length.
+\\
 Relevance to Medical Summarization: This metric ensures that the generated summary is uniform and of the same sentence structure as complex medical sentences, which is crucial for clinical report and note readability and logical flow.
 \\
     \item \textbf{METEOR} (Metric for Evaluation of Translation with Explicit ORdering)
 Application: METEOR is an extension of BLEU with incorporation of synonyms, stemming, and word order along with explicit n-gram overlap. It is particularly useful in medical texts where different words share the same meaning.
+\\
 Procedure:
 Tokenize text and apply stemming to normalize word forms.
 Search for exact, stemmed, and synonym matches.
 Compute a harmonic mean of precision and recall with additional penalties on incorrect word order.
+\\
 Relevance to Medical Summarization: METEOR is helpful in detecting the semantic similarity of medical terminology (e.g., "hypertension" and "high blood pressure"). This helps to ensure that variation in medical vocabulary is taken into account, leading to improved estimation of summary quality.
 \\
     \item \textbf{BERTScore}
 Application: BERTScore employs transformer-based embeddings to measure the semantic similarity between the reference and generated summaries, rather than word or phrase matching.
+\\
 Procedure:
 Embed both summaries within the context of a pre-trained BERT model.
 Compute cosine similarity between token embeddings.
 Average token-level scores to produce a global similarity score.
+\\
 Relevance to Medical Summarization: BERTScore ensures that the complex medical information present in the summary maintains its original meaning. Since medical text often involves subtle details, this metric avoids the global message being altered even when different wording is used.
 Using these evaluation criteria, this work ensures that the generated medical summaries are very lexically accurate, semantically true, fluent, and recall-high of critical medical information. Each criterion serves a specific purpose in assessing medical summarization quality:
 BLEU and ROUGE assess key term recall.
