@@ -40,46 +40,46 @@
 
 %\usepackage{showframe}
 
-\graphicspath{{Fig/}}
-
 % line numbers
 %\usepackage[mathlines, switch]{lineno}
 %\usepackage[right]{lineno}
 
-\theoremstyle{thmstyleone}%
-\newtheorem{theorem}{Theorem}%  meant for continuous numbers
+%%\theoremstyle{thmstyleone}%
+%%\newtheorem{theorem}{Theorem}%  meant for continuous numbers
 %%\newtheorem{theorem}{Theorem}[section]% meant for sectionwise numbers
 %% optional argument [theorem] produces theorem numbering sequence instead of independent numbers for Proposition
-\newtheorem{proposition}[theorem]{Proposition}%
+%%\newtheorem{proposition}[theorem]{Proposition}%
 %%\newtheorem{proposition}{Proposition}% to get separate numbers for theorem and proposition etc.
-\theoremstyle{thmstyletwo}%
-\newtheorem{example}{Example}%
-\newtheorem{remark}{Remark}%
-\theoremstyle{thmstylethree}%
-\newtheorem{definition}{Definition}
+%%\theoremstyle{thmstyletwo}%
+%%\newtheorem{example}{Example}%
+%%\newtheorem{remark}{Remark}%
+%%\theoremstyle{thmstylethree}%
+%%\newtheorem{definition}{Definition}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 
 \begin{document}
 
-\journaltitle{medLLM}
-\DOI{DOI HERE}
-\copyrightyear{2022}
+
 \pubyear{2025}
-\access{Advance Access Publication Date: Day Month Year}
-\appnotes{Paper}
+\appnotes{Report}
 
 \firstpage{1}
 
+\graphicspath{{Fig/}}
+
 %\subtitle{Subject Section}
 
-\title[Short Article Title]{medLLM: Fine-Tuning a Medical language Model for Clinical Decision Support}
+\title[Fine-Tuning LLM for Clinical Decision Support]{medLLM: Fine-Tuning a Medical language Model for Clinical Decision Support}
 
-\author[1,$\ast$]{First Author}
-\author[2]{Second Author}
-\author[3]{Third Author}
-\author[3]{Fourth Author}
-\author[4]{Fifth Author\ORCID{0000-0000-0000-0000}}
-
-\authormark{Author Name et al.}
+\author{Gaurika Chopra}
+\author{Noah Garkisch}
+\author{Neil Hinrichs}
+\author{Willi Löther}
+\author{Dominik Martens}
+\author{Tejaswi Venkatesh}
 
 \address[1]{\orgdiv{Department}, \orgname{Organization}, \orgaddress{\street{Street}, \postcode{Postcode}, \state{State}, \country{Country}}}
 \address[2]{\orgdiv{Department}, \orgname{Organization}, \orgaddress{\street{Street}, \postcode{Postcode}, \state{State}, \country{Country}}}
@@ -133,14 +133,18 @@
 %\bibliographystyle{plain}
 %\bibliography{reference}
 
-\begin{thebibliography}{10}
+%\begin{thebibliography}{10}
 
-\bibitem{bahdanau2014neural}
-Dzmitry Bahdanau, Kyunghyun Cho, and Yoshua Bengio.
-\newblock Neural machine translation by jointly learning to align and
-  translate.
-\newblock {\em arXiv preprint arXiv:1409.0473}, 2014.
+%\bibitem{bahdanau2014neural}
+%Dzmitry Bahdanau, Kyunghyun Cho, and Yoshua Bengio.
+%\newblock Neural machine translation by jointly learning to align and
+%  translate.
+%\newblock {\em arXiv preprint arXiv:1409.0473}, 2014.
 
-\end{thebibliography}
+\bibliographystyle{plain}
+\bibliography{reference}
+%\printbibliography[heading=bibintoc,title={References}]
+
+%\end{thebibliography}
 
 \end{document}

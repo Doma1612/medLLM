@@ -42,7 +42,25 @@ The model correctly extracts symptoms such as 'dry cough,' 'dyspnea,' 'cough,' '
 
 
 \subsection{Encoder}
+The goal of our encoder is to take the symptoms of the patients as input and to predict the relevant articles for these symptoms.\\
+As our encoder, we used a RoBERTa model~\cite{liu2019robertarobustlyoptimizedbert}, which is an optimized BERT model~\cite{devlin2018bert}, which on the other hand is a transformer encoder stack~\cite{vaswani2017attention}. The input of our model are tokens of the symptoms that are calculated using the RoBERTA tokenizer. Since the task was to classify the symptoms, we used RobertaForSequenceClassification which is a module in PyTorch.\footnote{\url{https://huggingface.co/docs/transformers/model_doc/roberta}} It contains a normal RoBERTa model with a linear layer on top, so that the output is already logits. These logits are then sent through a sigmoid activation function to get a probability distribution over all possible papers. We then applied Top-K sampling to extract the k most probable papers, for the given symptoms.
 
+\subsection{Training}
+For training the encoder model, we split the dataset into training and test sets with a ratio of 80/20. The batch sizes depended on the size of the training data. Over time we had training data with different input and output sizes depending on how many papers we used and if we used only symptoms or whole patient descriptions as the input. The patient descriptions often exceeded the input length maximum from the RoBERTa-tokenizer of 512 tokens while the length of the extracted symptoms stayed under 50 tokens most of the time. Since we trained our model on a NVIDIA GeForce RTX 2080 Super with 8GB of GDDR6 VRAM our computational power was limited and by exhausting the computational limits, the batches varied in sizes between 16 and 256, depending on the mentioned training data. The size also effected the training duration and was between 19 seconds and 150 minutes per epoch, which resulted in complete training durations of about 16 minutes for 50 epochs and theoretically over 5 days, which we were not able to do, since we could not let our model train for over 5 days on our private hardware.\\
+We trained the model to minimize the binary cross entropy loss function. PyTorch has a variation, that already has a sigmoid activation function implemented, that is called BCEWithLogitsLoss. Therefore, we could feed the encoder output directly into the loss function. It is also numerically more stable to combine both steps into one layer, because it takes advantage of the log-sum-exp trick for numerical stability.\footnote{\url{https://pytorch.org/docs/stable/generated/torch.nn.BCEWithLogitsLoss.html}} Since the total number of papers were significantly higher than the number of papers per patient we had to apply a custom positive weight to each paper in the loss function according to the formula:
+\begin{align*}
+    pos\_weight = \frac{n_t - n_a}{n_a}
+\end{align*}
+%posweight=(n_t-n_a  )/n_a 
+were $n_t$ denotes the total number of papers and $n_a$ denotes the average number of papers per patient.
+As an optimizer we used the Adam optimizer~\cite{diederik2014adam} with a learning rate of 0.0001. As seen in Figure~\ref{fig:loss} our model immediately began to overfit. This is due to the high number of different papers. Since there are nearly 3 times more papers than patients, there are lot of papers in the test dataset that are not in the train dataset. Therefore, the model is not able to predict these papers and the test loss gets worse over time.
+
+\begin{figure}[hbt!]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Fig/loss.png}
+    \caption{Train- and test-loss during training of the RoBERTa model}
+    \label{fig:loss}
+\end{figure}\noindent 
 
 \subsection{Decoder}
 To retrieve the corresponding full-text papers from the output of the encoder, which is a list of indices, the previously created mapping of paper IDs to indices is reused. Using this mapping, the list of paper IDs is obtained, and their respective full-text information is extracted from the full-text CSV by matching the paper IDs.
@@ -54,7 +72,8 @@ Each section of a paper was appended to a structured prompt containing summariza
 \subsection{Evaluation methods}
 For measuring medical text summarization quality, a set of proven metrics is used. The metrics assess different aspects of the generated summaries, including lexical similarity, phrase accuracy, fluency, semantic relevance, and synonym detection. The particular evaluation methods and how they are used in medical summarization are described below.
 \begin{enumerate}
-    \item BLEU (Bilingual Evaluation Understudy)
+
+\item \textbf{BLEU} (Bilingual Evaluation Understudy)
 Application: BLEU measures similarity between generated summary and reference text in terms of n-gram overlaps. It employs precision-scaled scoring, wherein n-grams in the generated text are matched with n-grams in the reference text, and a brevity penalty is used to avoid very short summaries.
 Procedure:
 Tokenize generated summary and reference text.
@@ -62,35 +81,40 @@ Get unigrams, bigrams, trigrams, and higher-order n-grams.
 Calculate overlapping n-gram precision.
 Apply a brevity penalty if the summary is less than the reference.
 Applicability to Medical Summarization: BLEU can preserve key medical terms and phrases unaltered in the summary. However, since it computes exact word overlaps, at times it may also lose the overall meaning, which is extremely crucial in medical environments where synonym use is widespread.
-    \item ROUGE-1 (Recall-Oriented Understudy for Gisting Evaluation - Unigram Overlap)
+\\
+    \item \textbf{ROUGE-1} (Recall-Oriented Understudy for Gisting Evaluation - Unigram Overlap)
 Application: ROUGE-1 estimates the frequency of unique keywords by calculating the recall of intersecting unigrams between the generated summary and the reference text.
 Procedure:
 Both texts are tokenized.
 Compute the number of matching unigrams between the reference and generated summaries.
 Compute recall by dividing the number of overlapping unigrams by the number of reference summary unigrams.
 Relevance to Medical Summarization: The measure ensures the most important medical keywords, i.e., the diagnoses, treatments, and symptoms, are reflected in the summary. It confirms no important words are omitted, as is desired in medical reporting.
-    \item ROUGE-2 (Bigram Overlap)
+\\
+    \item \textbf{ROUGE-2} (Bigram Overlap)
 Use: ROUGE-2 measures phrase-level accuracy using bigram (two-word) overlap between system output and reference summaries.
 Process:
 Tokenize both summaries.
 Find bigrams from both summaries.
 Compute recall as the number of exact bigrams over the total number of bigrams in the reference summary.
-Medical Summarization Relevance: By considering matches at the phrase level, this metric helps us assess the contextually correct usage of medical phrases such that medically significant expressions like "chronic kidney disease" are correctly captured in the summary.
-    \item ROUGE-L (Longest Common Subsequence)
+Medical Summarization Relevance: By considering matches at the phrase level, this metric helps us assess the contextually correct usage of medical phrases, such that medically significant expressions like "chronic kidney disease" are correctly captured in the summary.
+\\
+    \item \textbf{ROUGE-L} (Longest Common Subsequence)
 Application: ROUGE-L measures the longest common subsequence of words between the generated abstract and reference text with original word order. This is employed to measure fluency and sentence construction.
  
 Procedure:
 Identify the longest common subsequence (LCS) of the two texts.
 Compute recall and F1-score based on the LCS length.
 Relevance to Medical Summarization: This metric ensures that the generated summary is uniform and of the same sentence structure as complex medical sentences, which is crucial for clinical report and note readability and logical flow.
-    \item METEOR (Metric for Evaluation of Translation with Explicit ORdering)
+\\
+    \item \textbf{METEOR} (Metric for Evaluation of Translation with Explicit ORdering)
 Application: METEOR is an extension of BLEU with incorporation of synonyms, stemming, and word order along with explicit n-gram overlap. It is particularly useful in medical texts where different words share the same meaning.
 Procedure:
 Tokenize text and apply stemming to normalize word forms.
 Search for exact, stemmed, and synonym matches.
 Compute a harmonic mean of precision and recall with additional penalties on incorrect word order.
 Relevance to Medical Summarization: METEOR is helpful in detecting the semantic similarity of medical terminology (e.g., "hypertension" and "high blood pressure"). This helps to ensure that variation in medical vocabulary is taken into account, leading to improved estimation of summary quality.
-    \item BERTScore
+\\
+    \item \textbf{BERTScore}
 Application: BERTScore employs transformer-based embeddings to measure the semantic similarity between the reference and generated summaries, rather than word or phrase matching.
 Procedure:
 Embed both summaries within the context of a pre-trained BERT model.
