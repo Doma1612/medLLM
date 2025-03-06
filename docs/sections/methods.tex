@@ -7,39 +7,57 @@ As part of the data preparation process, the original PMC Patients dataset was f
 In the next processing step, the already extracted full texts are further refined and merged into a consolidated data set that serves as the basis for machine learning. First, several CSV files in which the PDF extractions are stored are loaded and systematically freed from duplicates. This is done using the unique PubMed IDs. Missing or incorrectly downloaded articles, for example those for which the download failed, are specifically removed to ensure data quality. At the same time, the list of articles that was originally kept in a separate dataset is compared with the consolidated full-text dataset. Only those articles that actually have a complete text are retained. The articles marked as relevant are then extracted from the patient information and their frequency of occurrence is analyzed. Only articles that appear in at least two patient descriptions, an indication of their relevance in terms of content, are included in the final data set. To facilitate integration into machine learning procedures, these relevant articles are converted into numerical indices. In addition, extracted symptom descriptions are also added from the patient data, resulting in an enriched data set that includes patient IDs, filtered and indexed article IDs as well as relevant clinical features. 
 
 \subsection{Symptom Extraction}
-Symptom extraction is a crucial process in medical text analysis, enabling efficient identification of patient symptoms from lengthy textual records. In this approach, we utilize Natural Language Processing (NLP) techniques to extract relevant symptoms from patient medical summaries. This method enhances the automation of clinical data processing, reducing manual efforts and improving accuracy in symptom identification. The key steps are further visualised in Figure 1. 
+Symptom extraction is a crucial process in medical text analysis, enabling efficient identification of patient symptoms from lengthy textual records. In this approach, we utilize Natural Language Processing (NLP) techniques to extract relevant symptoms from patient medical summaries. This method enhances the automation of clinical data processing, reducing manual efforts and improving accuracy in symptom identification. The key steps are further visualized in Figure 1. 
+
 \begin{enumerate}
-    \item input
-    The data used for symptom extraction is sourced from PMC records stored in a structured CSV file. These records contain textual descriptions of patient symptoms, diagnoses, and treatments. Medical text often includes domain-specific terminology and abbreviations, a specialized approach is required to extract meaningful symptom-related information accurately. 
+    \item \textbf{Input}
+    The data used for symptom extraction is sourced from PMC records stored in a structured CSV file. These records contain textual descriptions of patient symptoms, diagnoses, and treatments. Medical text often includes domain-specific terminology and abbreviations. Therefore, a specialized approach is required to extract meaningful symptom-related information accurately. 
 
-    \item pre-processing
-    A predefined list of symptoms is utilised, which is gathered from NHS, Medline PLus and Mayo Clinic.  The NLP model preprocesses the medical text by performing:
-- Tokenization
-- Normalisation
-- Named Entity Recognition
-- Stopword Removal
-The preprocessing step refines the textual data, ensuring that the extracted symptoms align with standardized medical terminologies and reducing noise in the dataset 
+    \item \textbf{Pre-processing}
+    A predefined list of symptoms is utilized, gathered from NHS, MedlinePlus, and Mayo Clinic. The NLP model preprocesses the medical text by performing:
+    \begin{itemize}
+        \item Tokenization
+        \item Normalization
+        \item Named Entity Recognition (NER)
+        \item Stopword Removal
+    \end{itemize}
+    The preprocessing step refines the textual data, ensuring that the extracted symptoms align with standardized medical terminologies and reducing noise in the dataset.
 
-    \item models for extraction
+    \item \textbf{Models for Extraction} 
     SciSpaCy, a specialized NLP library tailored for biomedical text processing, is employed to detect symptoms within medical records. It utilizes pre-trained models and medical ontologies to accurately recognize symptom-related terms. The extracted symptom list is then cross-checked against recognized medical entities to ensure accuracy and eliminate false positives.
 
-
-    \item data integration
+    \item \textbf{Data Integration} 
     Once the symptoms are extracted, they are systematically stored in a new column within the dataset for each patient. The patient column containing medical descriptions is passed through the SciSpaCy model, and the output is stored as a new column containing the extracted symptoms.
 \end{enumerate}
-Why were the models chosen? 
+
+\begin{figure*}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{fig/symptom_extraction.png}  
+    \caption{Key steps in the symptom extraction process}
+    \label{fig:symptom_extraction}
+\end{figure*}
+
+\subsection{Why Were the Models Chosen?}
+
 SciSpaCy was selected due to its robust capabilities in biomedical text processing. Unlike generic NLP libraries, SciSpaCy is specifically designed to handle complex medical terminology, making it well-suited for symptom extraction. Key reasons for its preference include:
+
 \begin{itemize}
-    \item Pre-Trained Medical Models: SciSpaCy includes models trained on large-scale biomedical datasets, allowing for high-accuracy symptom recognition.
-    \item Integration with Medical Knowledge Bases: It supports linking extracted terms to medical ontologies such as UMLS, enhancing reliability.
-    \item Scalability: SciSpaCy is optimized for handling large datasets, making it ideal for processing extensive patient records.
-    \item Customization and Flexibility: The framework allows for fine-tuning models and adding domain-specific rules, making it adaptable to various medical applications.
+    \item \textbf{Pre-Trained Medical Models}: SciSpaCy includes models trained on large-scale biomedical datasets, allowing for high-accuracy symptom recognition.
+    \item \textbf{Integration with Medical Knowledge Bases}: It supports linking extracted terms to medical ontologies such as UMLS, enhancing reliability.
+    \item \textbf{Scalability}: SciSpaCy is optimized for handling large datasets, making it ideal for processing extensive patient records.
+    \item \textbf{Customization and Flexibility}: The framework allows for fine-tuning models and adding domain-specific rules, making it adaptable to various medical applications.
 \end{itemize}
-Exceptional Cases: Taking an example medical string into account from our dataset 
-“Early Physical Therapist Interventions for Patients With COVID-19 in the Acute Care Hospital: A Case Report Series,"This 60-year-old male was hospitalized due to moderate ARDS from COVID-19 with symptoms of fever, dry cough, and dyspnea. We encountered several difficulties during physical therapy on the acute ward. First, any change of position or deep breathing triggered coughing attacks that induced oxygen desaturation and dyspnea. To avoid rapid deterioration and respiratory failure, we instructed and performed position changes very slowly and step-by-step. In this way, a position change to the 135° prone position () took around 30 minutes. This approach was well tolerated and increased oxygen saturation, for example, on day 5 with 6 L/min of oxygen from 93\% to 97\%. Second, we had to adapt the breathing exercises to avoid prolonged coughing and oxygen desaturation. Accordingly, we instructed the patient to stop every deep breath before the need to cough and to hold inspiration for better air distribution. In this manner, the patient performed the breathing exercises well and managed to increase his oxygen saturation. Third, the patient had difficulty maintaining sufficient oxygen saturation during physical activity. However, with close monitoring and frequent breaks, he managed to perform strength and walking exercises at a low level without any significant deoxygenation. Exercise progression was low on days 1 to 5, but then increased daily until hospital discharge to a rehabilitation clinic on day 10.”
 
-The model correctly extracts symptoms such as 'dry cough,' 'dyspnea,' 'cough,' 'coughing,' and 'COVID-19.' However, it also incorrectly identifies non-symptoms such as 'acute ward,' 'air distribution,' 'physical therapy,' and 'position.' To improve symptom extraction, refining the model's training data and incorporating domain-specific filtering techniques can help reduce false positives. Additionally, handling ambiguous terms and context-dependent cases—such as 'position' in a medical posture versus a symptom-related description can further enhance accuracy.
+\subsection{Exceptional Cases}
+Consider the following example medical string from our dataset:
 
+\begin{quote}
+\textit{“Early Physical Therapist Interventions for Patients With COVID-19 in the Acute Care Hospital: A Case Report Series." This 60-year-old male was hospitalized due to moderate ARDS from COVID-19 with symptoms of fever, dry cough, and dyspnea. We encountered several difficulties during physical therapy on the acute ward. First, any change of position or deep breathing triggered coughing attacks that induced oxygen desaturation and dyspnea. To avoid rapid deterioration and respiratory failure, we instructed and performed position changes very slowly and step-by-step. In this way, a position change to the 135° prone position took around 30 minutes. This approach was well tolerated and increased oxygen saturation. For example, on day 5 with 6 L/min of oxygen, his saturation improved from 93\% to 97\%. Second, we had to adapt the breathing exercises to avoid prolonged coughing and oxygen desaturation. Accordingly, we instructed the patient to stop every deep breath before the need to cough and to hold inspiration for better air distribution. In this manner, the patient performed the breathing exercises well and managed to increase his oxygen saturation. Third, the patient had difficulty maintaining sufficient oxygen saturation during physical activity. However, with close monitoring and frequent breaks, he managed to perform strength and walking exercises at a low level without any significant deoxygenation. Exercise progression was low on days 1 to 5 but then increased daily until hospital discharge to a rehabilitation clinic on day 10.”}
+\end{quote}
+
+The model correctly extracts symptoms such as \textbf{'dry cough,' 'dyspnea,' 'cough,' 'coughing,'} and \textbf{'COVID-19'}. However, it also incorrectly identifies non-symptoms such as \textbf{'acute ward,' 'air distribution,' 'physical therapy,'} and \textbf{'position'}. 
+
+To improve symptom extraction, refining the model's training data and incorporating domain-specific filtering techniques can help reduce false positives. Additionally, handling ambiguous terms and context-dependent cases—such as distinguishing 'position' in a medical posture versus a symptom-related description—can further enhance accuracy.
 
 \subsection{Encoder}
 The goal of our encoder is to take the symptoms of the patients as input and to predict the relevant articles for these symptoms.\\
