@@ -75,23 +75,32 @@ As an optimizer, we used the Adam optimizer~\cite{diederik2014adam} with a learn
 
 \begin{figure}[hbt!]
     \centering
-    \includegraphics[width=0.5\textwidth]{Fig/loss.png}
+    \includegraphics[width=0.5\textwidth]{fig/loss.png}
     \caption{Train- and test-loss during training of the RoBERTa model}
     \label{fig:loss}
 \end{figure}\noindent 
 
 \subsection{Decoder}
-To retrieve the corresponding full-text papers from the output of the encoder, which is a list of indices, the previously created mapping of paper IDs to indices is reused. Using this mapping, the list of paper IDs is obtained, and their respective full-text information is extracted from the full-text CSV by matching the paper IDs.
+To retrieve the corresponding full-text papers from the output of the encoder, which is a list of indices, the previously for encoder training created mapping of paper IDs to indices is reused. Using this mapping, the list of paper IDs is obtained, and their respective full-text information is extracted from the full-text CSV by matching the paper IDs.
 Since the full-text papers can span multiple pages, making their content accessible and understandable in a short time frame requires summarization. This allows users to quickly grasp the key insights of each paper without having to read them in full.
-A variety of decoder language models (LLMs) were considered for this task, including Mistral, LLaMA 2, and LLaMA 3.3. However, due to hardware constraints, LLaMA 3.2 1B Instruct was ultimately chosen. Before passing the full-text papers to the LLaMA model for summarization, additional considerations were necessary to manage hardware limitations effectively.
+A variety of decoder language models (LLMs) were considered for this task, including Mistral AI, LLaMA 2, and LLaMA 3.3. However, due to hardware constraints, LLaMA 3.2 1B Instruct was ultimately chosen. Before passing the full-text papers to the LLaMA model for summarization, additional considerations were necessary to manage hardware limitations effectively.
 To optimize memory usage, the RoBERTa model was re-initialized with each patient summary input and deleted before using the LLaMA model. This approach resulted in a negligible trade-off between initialization time and memory usage. Furthermore, instead of processing each full-text paper as a whole, the papers were split into halves to accommodate the GPU's memory limitations.
 Each section of a paper was appended to a structured prompt containing summarization instructions. Once all papers and their respective sections were processed, the prompt was removed from each summary. The summarized sections of each paper were then concatenated to reconstruct a single coherent summary per paper. Finally, all individual paper summaries were combined into a single output string before being returned to the user interface.
+
+\subsection{Web Interface}
+A Streamlit-based LLM chat application serves as the user interface for interaction. The user inputs a patient description through the web interface, from which symptoms are extracted and added to a list of symptoms. This list serves as input for the encoder, which classifies relevant articles based on its training data. The identified articles are then used to retrieve their full-text content from a CSV file. Afterwards, the extracted full-text articles are processed by the decoder for summarization. The summarized content is then displayed in the web interface, completing the workflow\ref{fig:architecture}.
+
+\begin{figure*}
+    \centering
+    \includegraphics[width=0.8\textwidth]{fig/bkim_architecture.png}
+    \caption{medLLM architecture}
+    \label{fig:architecture}
+\end{figure*}
 
 \subsection{Evaluation methods}
 For measuring medical text summarization quality, a set of proven metrics is used. The metrics assess different aspects of the generated summaries, including lexical similarity, phrase accuracy, fluency, semantic relevance, and synonym detection. The particular evaluation methods and how they are used in medical summarization are described below.
 \begin{enumerate}
-
-\item \textbf{BLEU} (Bilingual Evaluation Understudy)
+    \item \textbf{BLEU} (Bilingual Evaluation Understudy)
 Application: BLEU measures similarity between generated summary and reference text in terms of n-gram overlaps. It employs precision-scaled scoring, wherein n-grams in the generated text are matched with n-grams in the reference text, and a brevity penalty is used to avoid very short summaries.
 \\
 Procedure:
